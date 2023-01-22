@@ -185,11 +185,10 @@ class Queue_MGC:
         self.customers = []
 
 
-    def add_customer(self, schedule, customer):
+    def add_customer(self, schedule):
         #add customer to the queue
-        self.customers.append(customer)
-        heapq.heappush(self.arrival_times, schedule.now)
         self.que_lenght += 1
+        heapq.heappush(self.arrival_times, schedule.now)
         #if the queue is not busy, start serving the customer
         if not self.busy:
             self.start_service(schedule)
@@ -205,6 +204,19 @@ class Queue_MGC:
         schedule.add_event_after(service_time, self.end_service)
 
     def end_service(self, schedule):
+        #end serving the customer
+        self.busy = False
+        #probability of the manager being called
+        if random.random() < 0.5:
+            pass
+
+        else:
+            self.departure_times.append(schedule.now)
+        #if there are more customers in the queue, start serving the next customer
+            if self.que_lenght > 0:
+                self.start_service(schedule)
+            else:
+                schedule.add_event_after(0, self.end_service)
 
 
 
@@ -213,4 +225,5 @@ class Queue_MGC:
 class GroceryStore_MGC:
     pass
         
+
 
