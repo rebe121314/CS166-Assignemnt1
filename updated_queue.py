@@ -46,26 +46,29 @@ class Event:
 
     def __lt__(self, other):
         '''
-        your docstring
+        The function to compare two events based on their timestamp.
+
         Parameters
         ----------
         other
-            <include your description here>
+            The other event to compare to.
         
         Returns
         -------
         bool
-            <include your description here>
+            True if the timestamp of the current event is less than the timestamp
         '''
         return self.timestamp < other.timestamp
 
     def run(self, schedule):
         '''
-        your docstring
+        The function to run the event by calling the function with the arguments
+        and keyword arguments.
         Parameters
         ----------
         schedule
-            <include your description here>
+            The schedule object that contains the event.
+            
         '''
         self.function(schedule, *self.args, **self.kwargs)
 
@@ -108,14 +111,22 @@ class Schedule:
     
     def add_event_at(self, timestamp, function, *args, **kwargs):
         '''
-        your docstring
+        The function to add an event to the schedule at a specific time.
+
         Parameters
         ----------
-        <include your list and description here>
+        timestamp : float
+            The time at which the event should run.
+        function : callable
+            The function to call when running the event.
+        args : tuple
+            The positional arguments to pass to the function.
+        kwargs : dict
+            The keyword arguments to pass to the function.
         
         Returns
         -------
-        <include your list and description here>
+        None
         '''
         heapq.heappush(
             self.priority_queue,
@@ -123,41 +134,85 @@ class Schedule:
     
     def add_event_after(self, interval, function, *args, **kwargs):
         '''
-        your docstring
+        The function to add an event to the schedule after a specific interval.
+
         Parameters
         ----------
-        <include your list and description here>
+        interval : float
+            The time after which the event should run.
+        function : callable
+            The function to call when running the event.
+        args : tuple
+            The positional arguments to pass to the function.
+        kwargs : dict
+            The keyword arguments to pass to the function.
         
         Returns
         -------
-        <include your list and description here>
+        None
         '''
         self.add_event_at(self.now + interval, function, *args, **kwargs)
     
     def next_event_time(self):
+        '''
+        The function to return the time at which the next event will run.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        float
+            The time at which the next event will run.
+        '''
         return self.priority_queue[0].timestamp
 
     def run_next_event(self):
         '''
-        your docstring
+        The function to run the next event in the schedule.
+
         Parameters
         ----------
-        <include your list and description here>
+        None
         
         Returns
         -------
-        <include your list and description here>
+        None
         '''
         event = heapq.heappop(self.priority_queue)
         self.now = event.timestamp
         event.run(self)
         
     def __repr__(self):
+        '''
+        The function to return a string representation of the schedule.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        str
+            A string representation of the schedule.
+        '''
         return (
             f'Schedule() at time {self.now}min ' +
             f'with {len(self.priority_queue)} events in the queue')
     
     def print_events(self):
+        '''
+        The function to print the schedule and the events in the queue.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        None
+        '''
         print(repr(self))
         for event in sorted(self.priority_queue):
             print(f'  ⏱ {event.timestamp}min: {event.function.__name__}')
@@ -165,6 +220,38 @@ class Schedule:
 
 #Add a MGC class to simulate
 class Queue_MGC:
+    '''
+    The class stores the information of the queue.
+
+    Attributes
+    ----------
+    service_distribution : scipy.stats.rv_continuous
+        The distribution of the service time.
+    manager : Manager
+        The manager object that contains the queue.
+    arrival_times : list
+        The list of arrival times of the customers.
+    departure_times : list
+        The list of departure times of the customers.
+    queue_length : int
+        The number of customers in the queue.
+    busy : bool
+        The indication of whether the queue is busy.
+
+    Methods
+    -------
+    _init_(self, service_distribution, manager)
+        Initialize the queue.
+    __lt__(self, other)
+        The function to compare the queue length of two queues.
+    add_customer(self, schedule)
+        The function to add a customer to the queue.
+    start_service(self, schedule)
+        The function to start the service of the queue.
+    end_service(self, schedule)
+        The function to end the service of the queue.
+
+    '''
     def _init_(self, service_distribution, manager):
         self.service_distribution = service_distribution
         self.manager = manager
@@ -174,10 +261,35 @@ class Queue_MGC:
         self.busy = False
     
     def __lt__(self, other):
+        '''
+        The function to compare the queue length of two queues.
+
+        Parameters
+        ----------
+        other : Queue_MGC
+            The other queue to compare with.
+
+        Returns
+        -------
+        bool
+            The indication of whether the queue length of the current queue is
+        '''
         return self.queue_length < other.queue_length
 
 
     def add_customer(self, schedule):
+        '''
+        The function to add a customer to the queue.
+
+        Parameters
+        ----------
+        schedule : Schedule
+            The schedule object that contains the queue.
+
+        Returns
+        -------
+        None
+        '''
         #add customer to the queue
         self.queue_length += 1
         # heapq.heappush(self.arrival_times, schedule.now)
@@ -191,6 +303,18 @@ class Queue_MGC:
             schedule.add_event_after(0, self.start_service)
         
     def start_service(self, schedule):
+        '''
+        The function to start serving a customer. It's accounts for the probability of the manager being called.
+        
+        Parameters
+        ----------
+        schedule : Schedule
+            The schedule object that contains the queue.
+
+        Returns
+        -------
+        None
+        '''
         #start serving the customer
         self.queue_length -= 1
         self.busy = True
@@ -201,6 +325,18 @@ class Queue_MGC:
             schedule.add_event_after(service_time, self.manager.add_customer)
 
     def end_service(self, schedule):
+        '''
+        The function to end serving a customer.
+
+        Parameters
+        ----------
+        schedule : Schedule
+            The schedule object that contains the queue.
+
+        Returns
+        -------
+        None
+        '''
         #end serving the customer
         self.busy = False
         self.departure_times.append(schedule.now)
@@ -209,6 +345,25 @@ class Queue_MGC:
             schedule.add_event_after(0, self.start_service)
 
 class Manager(Queue_MGC):
+    '''
+    The class stores the information of the manager.
+
+    Attributes
+    ----------
+    Queue_MGC : Queue_MGC
+        The queue class that contains the manager.
+
+
+
+    Methods
+    -------
+    _init_(self, service_distribution)
+        Initialize the que that the manager will use
+
+    start_service(self, schedule)
+        The function to start serving a customer.
+    .
+    '''
     def __init__(self):
         super().__init__()
 
@@ -221,6 +376,19 @@ class Manager(Queue_MGC):
 
 #add the manager to teh grocery store class
 class GroceryStore_MGC:
+    '''
+    The class stores the information of the grocery store.
+
+    Attributes
+    ----------
+    manager : Manager
+        The manager object that contains the queue.
+    queues : list
+        The list of queues in the grocery store.
+    arrival_distribution : scipy.stats.rv_continuous
+        The distribution of the arrival time.
+
+    '''
     def __init__(self, arrival_distribution, service_distribution, manager_distribution, queue_count):
         self.manager = Manager(manager_distribution)
         self.queues = [Queue_MGC(service_distribution, self.manager)] * queue_count
@@ -252,4 +420,9 @@ def run_simulation(arrival_distribution, service_distribution, manager_distribut
     return grocery_store
         
 
-
+arrival_distribution = sts.expon(scale=1/2)
+service_distribution = sts.expon(scale=1/3)
+manager_distribution = sts.expon(scale=1/2)
+queue_count = 3
+run_until = 1000
+run_simulation(arrival_distribution=arrival_distribution, service_distribution=service_distribution, manager_distribution=manager_distribution, queue_count=queue_count, run_until=run_until)
